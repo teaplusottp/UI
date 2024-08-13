@@ -1,0 +1,38 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Results</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+ <style>
+        .video-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .video-container iframe {
+            width: 30%;
+            height: 200px; /* Điều chỉnh chiều cao theo nhu cầu */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2>Processing Completed</h2>
+        <p>Video file: {{ filename }}</p>
+        <p>Metadata: </p>
+      
+        <div class="video-container">
+        {% for url in metadata %}
+            <iframe width="560" height="315" src={{url}} frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        {% endfor %}
+    </div>
+        <!-- You can display additional processing results here -->
+        <a href="/" class="btn btn-primary">Upload Another Video</a>
+    </div>
+</body>
+</html> 
