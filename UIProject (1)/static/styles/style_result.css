@@ -215,8 +215,16 @@
   font-weight: 600;
 }
 
+.gallery {
+    display: flex;
+    flex-wrap: wrap;
+}
 
-
+.gallery img {
+    margin: 5px;
+    width: 200px; /* Hoặc kích thước bạn mong muốn */
+    height: auto;
+}
 
 
 

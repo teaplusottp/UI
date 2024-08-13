@@ -29,6 +29,16 @@ document.getElementById('upload-submenu').addEventListener('click', function (ev
     triggerFileUpload();
 });
 
+function Ouput_Appearance(imageUrls){
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = ''; 
+    imageUrls.forEach(imageUrl => {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        gallery.appendChild(img);
+    });
+}
+
 document.getElementById('start-query').addEventListener('click', function (event) {
 //    event.preventDefault();
     
@@ -43,15 +53,17 @@ document.getElementById('start-query').addEventListener('click', function (event
         },
         body: JSON.stringify({data: filteredData})  // Đặt danh sách vào một đối tượng JSON
     })
+
     .then(response => response.json())
     .then(data => {
-        console.log(data);  // Xử lý kết quả trả về từ Flask
-        //sửa ở đâ
+        //console.log(data['imageUrls']);  
+        Ouput_Appearance(data['imageUrls']);
     })
     .catch(error => console.error('Error:', error));
     //sendDataToServer();
     
 });
+
 //?
 function sendDataToServer() {
     let data = getAllData();
