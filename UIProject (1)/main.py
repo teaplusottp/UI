@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, render_template, request, session, flash, jsonify
-from werkzeug.utils import secure_filename
 from plugin.process import del_img,process_ai,get_image_urls
+from werkzeug.utils import secure_filename
+from plugin.test import read_json_file
 from PIL import Image
 import base64
 import json
@@ -17,10 +18,6 @@ app.config['ALLOWED_EXTENSIONS'] = {'json'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def read_json_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
-    return [video["watch_url"].replace("watch?v=", "embed/") for video in data]
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -39,7 +36,7 @@ def home():
             flash('Metadata uploaded and processed successfully!')
             return redirect(url_for('display_results'))
     #thu thập ảnh từ file đã xử lý
-    relative_path = 'UIProject/static/output'
+    relative_path = 'static/output'
     image_folder = os.path.abspath(relative_path)
     images = [f for f in os.listdir(image_folder) if os.path.isfile(os.path.join(image_folder, f))]
 
@@ -80,23 +77,24 @@ def upload():
     os.makedirs(input_folder, exist_ok=True)
 
     del_img(input_folder)
+    if(base64_images!=[]):
+        # Xử lý ảnh base64 nếu có
+        processed_images = []
+        os.makedirs(input_folder, exist_ok=True)  # Tạo thư mục nếu chưa tồn tại
 
-    # Xử lý ảnh base64 nếu có
-    processed_images = []
-    os.makedirs(input_folder, exist_ok=True)  # Tạo thư mục nếu chưa tồn tại
-    for i, base64_image in enumerate(base64_images):
-        header, encoded = base64_image.split(',', 1)
-        image_data = base64.b64decode(encoded)
-        image = Image.open(io.BytesIO(image_data))
-        #  xử lý ảnh:
-        grayscale_image = process_ai(image)
+        for i, base64_image in enumerate(base64_images):
+            header, encoded = base64_image.split(',', 1)
+            image_data = base64.b64decode(encoded)
+            image = Image.open(io.BytesIO(image_data))
+            #  xử lý ảnh:
+            grayscale_image = process_ai(image)
 
-        output_path = os.path.join(input_folder, f'processed_image_{i}.png')
-        grayscale_image.save(output_path)
-        buffered = io.BytesIO()
-        grayscale_image.save(buffered, format="PNG")
-        processed_image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-        processed_images.append(processed_image_base64)
+            output_path = os.path.join(input_folder, f'processed_image_{i}.png')
+            grayscale_image.save(output_path)
+            buffered = io.BytesIO()
+            grayscale_image.save(buffered, format="PNG")
+            processed_image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+            processed_images.append(processed_image_base64)
     return get_image_urls(output_folder)
 
     
