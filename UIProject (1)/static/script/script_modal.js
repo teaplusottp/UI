@@ -3,6 +3,11 @@
 
 var query_index = 1 ;
 let currentItemId = null;
+
+const canvas = document.getElementById('paintCanvas');
+const ctx = canvas.getContext('2d');
+let painting = false;
+
 let currentQueryElement = null;
 
 //csv
@@ -47,6 +52,16 @@ function deleteQuery() {
     }
 }
 //save 
+function savePaint(){
+    $('#drawModal').modal('hide');
+    const dataURL = canvas.toDataURL('image/png');
+    saveDataLineByLine(dataURL);
+    console.log(dataURL);
+    addQueryToHistory(query_index, "Draw");
+    query_index+=1
+    clearCanvas();
+
+}
 function saveText() {
     //lấy các ô text
     var time = document.getElementById("time").value;
@@ -54,39 +69,20 @@ function saveText() {
     var description = document.getElementById("description").value;
     //gom lại dễ xử lý
     var query = time+", "+place+", "+ description;
-    //lưu lại
-    //localStorage.setItem('query'+query_index, JSON.stringify(query));
     saveDataLineByLine(query);
-    //lấy item test thử
-    // var storedColors = JSON.parse(localStorage.getItem('query'+query_index));
-    // console.log(storedColors); 
-    // console.log("index:"+query_index ); 
-    //xóa đi modal
     $('#textModal').modal('hide');
     //reset lại
     document.getElementById("time").value = "";
     document.getElementById("place").value = "";
     document.getElementById("description").value = "";
-    //thêm vào kia
     addQueryToHistory(query_index, "Text");
-    //đánh dấu query index
     query_index+=1
 }
 function saveColor(){
-    //lấy dữ liệu
     var color = document.getElementById('dominant_color').value;
-    //lưu lại   
-    //saveDataToLocalStorage(color)
     saveDataLineByLine(color);
-    //in ra thử
-    // var storedColors = JSON.parse(localStorage.getItem('query'+query_index));
-    // console.log("Selected color:", storedColors);
-    // console.log("index:"+query_index ); 
-    //xóa đi modal
     $('#colorModal').modal('hide');            
-    //thêm vào ui
     addQueryToHistory(query_index, "Color");
-    //cộng 1
     query_index+=1;
 }
 function compressImg(img, maxWidth = 800, maxHeight = 800, quality = 0.7) {
@@ -96,7 +92,6 @@ function compressImg(img, maxWidth = 800, maxHeight = 800, quality = 0.7) {
         var width = img.width;
         var height = img.height;
 
-        // Resize logic
         if (width > height) {
             if (width > maxWidth) {
                 height *= maxWidth / width;
@@ -158,7 +153,6 @@ function saveImg2(imgPath) {
             console.error("Error loading image:", error);
         });
 }
-
 function saveChange(){
     if (currentQueryElement) {
 
@@ -203,8 +197,8 @@ document.getElementById('history-submenu').addEventListener('click', function (e
         event.preventDefault(); 
         var linkText12 = event.target.innerText.trim().toLowerCase();
         var id = linkText12.match(/\d+/);
-
-        if(linkText12.split(':')[1].trim()==='text'){
+        var case_option=linkText12.split(':')[1].trim();
+        if(case_option==='text'){
 
             showModal('#textModal-edit');
             var txt=getDataByIndex(id-1);
@@ -215,18 +209,23 @@ document.getElementById('history-submenu').addEventListener('click', function (e
             document.getElementById("place-edit").value = txt[1];
             document.getElementById("description-edit").value = txt[2];
         }
-        if(linkText12.split(':')[1].trim()==='image'){
+        if(case_option==='image'){
             showModal('#imageModal-edit');
 
             var txt=getDataByIndex(id-1);
             document.getElementById('defaultImage-edit').src = txt;
 
         }
-         if(linkText12.split(':')[1].trim()==='color'){
+         if(case_option==='color'){
             showModal('#colorModal-edit');
             var txt=getDataByIndex(id-1);
             // Cập nhật giá trị input
             document.getElementById('colorPicker').value = txt;
+        }
+        if(case_option==='draw'){
+            showModal('#imageModal-edit');
+            var txt=getDataByIndex(id-1);
+            document.getElementById('defaultImage-edit').src = txt;
         }
     }
 });
@@ -280,7 +279,7 @@ function addToQuery(card,filepath){
    card.addEventListener("click", function() {
         saveImg2(filepath) ;
         var newItem = document.createElement('li');
-        newItem.innerHTML = `<a href="#" id=${query_index} onclick="showSelectedModal(this)"   >Query ${query_index_index} : Image</a>`;
+        newItem.innerHTML = `<a href="#" id=${query_index} onclick="showSelectedModal(this)"   >Query ${query_index} : Image</a>`;
     });
 }
 
@@ -334,9 +333,6 @@ document.getElementById('start-query').addEventListener('click', function (event
         //console.log(data['imageUrls']);  
         Ouput_Appearance(data['imageUrls']);
     })
-    .catch(error => console.error('Error:', error));
-    //sendDataToServer();
-    
 });
 
 //?
@@ -415,6 +411,9 @@ document.querySelectorAll('.sub-menu a').forEach(link => {
             showModal('#imageModal');
         } else if (linkText === 'color') {
             showModal('#colorModal');
+        }else if (linkText === 'draw') {
+            //showModal('#colorModal');
+            showModal('#drawModal');
         }
     });
 });
@@ -515,3 +514,43 @@ function startProcessing() {
     // This function can submit the form data or process it via Ajax
     
 }
+
+
+
+
+function startPosition(e) {
+    painting = true;
+    draw(e);
+}
+
+function endPosition() {
+    painting = false;
+    ctx.beginPath();
+}
+
+function draw(e) {
+    if (!painting) return;
+    ctx.lineWidth = document.getElementById('brushSize').value;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = document.getElementById('colorPicker').value;
+
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(e.offsetX, e.offsetY);
+}
+
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function changeBackgroundColor() {
+    const bgColor = document.getElementById('bgColorPicker').value;
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+
+canvas.addEventListener('mousedown', startPosition);
+canvas.addEventListener('mouseup', endPosition);
+canvas.addEventListener('mousemove', draw);
